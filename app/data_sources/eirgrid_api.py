@@ -1,26 +1,43 @@
 import requests
 import pandas as pd
+import os
+from datetime import datetime
 
-EIRGRID_DATA_URL = "https://www.eirgrid.ie/smartgrid/data_endpoint.json"
+EIRGRID_API_URL = "https://www.eirgrid.ie/api/graph-data"
 
-def fetch_eirgrid_data():
-    """Fetches balancing market data from EirGrid's dashboard."""
-    try:
-        response = requests.get(EIRGRID_DATA_URL)
+DATA_TYPES = ["demandactual", "demandforecast", "fuelmix", "windactual", "windforecast", "co2emission", "co2intensity", "interconnection"]
 
-        if response.status_code == 200:
+RAW_PATH = "ml_models/data/raw/"
+os.makedirs(RAW_PATH, exist_ok=True)
+
+TODAY = datetime.today().strftime("%d %b %Y")
+CSV_DATE = datetime.today().strftime("%Y%m%d")
+
+def fetch_eirgrid_data(data_type):
+    """Fetches data from EirGrid API and saves as CSV."""
+    params = {"area": data_type, "region": "ALL", "date": TODAY}
+    
+    response = requests.get(EIRGRID_API_URL, params=params)
+    
+    if response.status_code == 200:
+        try:
             data = response.json()
             df = pd.DataFrame(data)
+
+            csv_filename = f"{RAW_PATH}{data_type}_{CSV_DATE}.csv"
+            df.to_csv(csv_filename, index=False)
+            print(f"{data_type} data saved to {csv_filename}")
+
             return df
-        else:
-            print(f"Error fetching data: {response.status_code}, {response.text}")
+        
+        except Exception as e:
+            print(f"Error processing {data_type}: {e}")
             return None
-    except Exception as e:
-        print(f"Error: {e}")
+    else:
+        print(f"Failed to fetch {data_type} data: {response.status_code}")
         return None
 
 if __name__ == "__main__":
-    df = fetch_eirgrid_data()
-    if df is not None:
-        df.to_csv("ml_models/data/raw/eirgrid_data.csv", index=False)
-        print("Data saved successfully!")
+    for data_type in DATA_TYPES:
+        fetch_eirgrid_data(data_type)
+
