@@ -1,4 +1,4 @@
-Balancing Market ML Project
+<u>Balancing Market ML Project</u>
 
 **Overview**
 
@@ -10,7 +10,7 @@ This project aims to develop a machine learning pipeline for forecasting electri
 
 * Historical Data Processing: Downloads and cleans SEMO CSV files for model training.
 
-* Machine Learning Models:
+**Machine Learning Models**
 
 * Demand Forecasting: Predict future electricity demand.
 
