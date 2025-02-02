@@ -1,4 +1,6 @@
-<ins>Balancing Market ML Project</ins>
+**Balancing Market ML Project**
+
+---
 
 **Overview**
 
