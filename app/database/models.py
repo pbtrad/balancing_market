@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from app.database.database import Base
 import datetime
 
+
 class DemandForecast(Base):
     __tablename__ = "demand_forecast"
 
@@ -10,7 +11,7 @@ class DemandForecast(Base):
     timestamp = Column(DateTime, default=datetime.datetime.utcnow, unique=True)
     forecasted_demand = Column(Float, nullable=False)  # Predicted demand
     actual_demand = Column(Float, nullable=True)  # Real demand
-    error_margin = Column(Float, nullable=True) # Diff between predicted and actual
+    error_margin = Column(Float, nullable=True)  # Diff between predicted and actual
 
 
 class Participant(Base):
@@ -18,7 +19,10 @@ class Participant(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, unique=True)
-    type = Column(Enum("generator", "supplier", "aggregator", name="participant_type"), nullable=False)
+    type = Column(
+        Enum("generator", "supplier", "aggregator", name="participant_type"),
+        nullable=False,
+    )
     balance = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
