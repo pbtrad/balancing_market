@@ -31,7 +31,7 @@ def convert_csv_to_tfrecord(csv_filename, tfrecord_filename):
         for f, l in zip(features, labels):
             writer.write(serialize_example(f, l))
 
-    print(f"Converted {csv_filename} → {tfrecord_filename}")
+    print(f"Converted {csv_filename} to {tfrecord_filename}")
 
 
 if __name__ == "__main__":
