@@ -1,7 +1,5 @@
 # Balancing Market ML Project
 
----
-
 **Overview**
 
 This project aims to develop a machine learning pipeline for forecasting electricity demand and balancing market trends using EirGrid data. The system integrates real-time data scraping, historical data downloads, and ML model training for improved market predictions.
