@@ -1,6 +1,0 @@
-ErrorMessage,LastUpdated,Rows,Status
-,02-Feb-2025 23:15:00,"{'EffectiveTime': '02-Feb-2025 23:15:00', 'FieldName': 'FUEL_COAL', 'Region': 'ALL', 'Value': 3623}",Success
-,02-Feb-2025 23:15:00,"{'EffectiveTime': '02-Feb-2025 23:15:00', 'FieldName': 'FUEL_GAS', 'Region': 'ALL', 'Value': 46080.72}",Success
-,02-Feb-2025 23:15:00,"{'EffectiveTime': '02-Feb-2025 23:15:00', 'FieldName': 'FUEL_NET_IMPORT', 'Region': 'ALL', 'Value': 10375.49}",Success
-,02-Feb-2025 23:15:00,"{'EffectiveTime': '02-Feb-2025 23:15:00', 'FieldName': 'FUEL_OTHER_FOSSIL', 'Region': 'ALL', 'Value': 3049.99}",Success
-,02-Feb-2025 23:15:00,"{'EffectiveTime': '02-Feb-2025 23:15:00', 'FieldName': 'FUEL_RENEW', 'Region': 'ALL', 'Value': 44941.71}",Success
