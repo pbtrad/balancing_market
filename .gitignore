@@ -58,3 +58,5 @@ secrets/
 *.key
 config.json
 .DS_Store
+ml_models/models/model.h5
+ml_models/models/checkpoint/

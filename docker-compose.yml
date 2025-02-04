@@ -29,5 +29,50 @@ services:
       - "8000:8000"
     command: ["/app/start.sh"]
 
+  eirgrid_api:
+    build: .
+    container_name: eirgrid_api_fetch
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    command: ["python", "data_sources/eirgrid_api.py"]
+
+  process_data:
+    build: .
+    container_name: process_data
+    depends_on:
+      - eirgrid_api
+    volumes:
+      - .:/app
+    command: ["python", "data_sources/process_data.py"]
+
+  convert_to_tfrecord:
+    build: .
+    container_name: convert_to_tfrecord
+    depends_on:
+      - process_data
+    volumes:
+      - .:/app
+    command: ["python", "ml_models/utils/convert_to_tfrecord.py"]
+
+  train_model:
+    build: .
+    container_name: train_model
+    depends_on:
+      - convert_to_tfrecord
+    volumes:
+      - .:/app
+    command: ["python", "ml_models/training/train_model.py"]
+
+  inference:
+    build: .
+    container_name: inference
+    depends_on:
+      - train_model
+    volumes:
+      - .:/app
+    command: ["python", "ml_models/inference/predict.py"]
+
 volumes:
   pg_data:
