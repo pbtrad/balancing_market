@@ -44,29 +44,17 @@ services:
       - ./app/ml_models/data:/app/ml_models/data
     command: ["python", "app/data_sources/eirgrid_api.py"]
 
-  process_data:
+  data_preprocessing:
     build:
       context: .
-    container_name: process_data
+    container_name: data_processing
     depends_on:
       - eirgrid_api
     env_file:
       - .env
     volumes:
       - ./app/ml_models/data:/app/ml_models/data
-    command: ["python", "app/data_sources/process_data.py"]
-
-  data_preprocessing:
-    build:
-      context: .
-    container_name: data_preprocessing
-    depends_on:
-      - process_data
-    env_file:
-      - .env
-    volumes:
-      - ./app/ml_models/data:/app/ml_models/data
-    command: ["python", "app/ml_models/utils/data_preprocessing.py"]
+    command: ["python", "app/ml_models/utils/data_processing.py"]
 
   convert_to_tfrecord:
     build:
