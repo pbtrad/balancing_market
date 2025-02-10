@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
-from ml_models.inference.predict import predict
+
+from app.ml_models.inference import predict
 
 router = APIRouter()
 

@@ -1,10 +1,9 @@
 from fastapi import FastAPI
-from app.api.routes import router as api_router
+from app.api.routes.forecast import router as forecast_router
 
 app = FastAPI(title="Balancing Market API")
 
-app.include_router(api_router, prefix="/api")
-
+app.include_router(forecast_router, prefix="/api/forecast")
 
 @app.get("/")
 def health_check():

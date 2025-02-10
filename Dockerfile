@@ -2,15 +2,18 @@ FROM python:3.11
 
 WORKDIR /app
 
-ENV TMPDIR=/app/tmp
-RUN mkdir -p $TMPDIR
-
-COPY requirements.txt .
-
+COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY alembic.ini /app/
+COPY ./migrations /app/migrations
+
+COPY ./app /app/app
+COPY start.sh /app/
+RUN chmod +x /app/start.sh
 
 ENV PYTHONUNBUFFERED=1
 
-CMD ["bash"]
+CMD ["/app/start.sh"]
+
+

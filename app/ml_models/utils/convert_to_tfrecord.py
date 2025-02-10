@@ -2,9 +2,12 @@ import tensorflow as tf
 import pandas as pd
 import os
 
-RAW_PATH = "ml_models/data/raw/"
-PROCESSED_PATH = "ml_models/data/processed/"
+RAW_PATH = os.path.join("/app", "ml_models", "data", "raw")
+PROCESSED_PATH = os.path.join("/app", "ml_models", "data", "processed")
+
+os.makedirs(RAW_PATH, exist_ok=True)
 os.makedirs(PROCESSED_PATH, exist_ok=True)
+
 
 
 def serialize_example(features, label):

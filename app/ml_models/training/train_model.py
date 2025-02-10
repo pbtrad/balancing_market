@@ -1,6 +1,6 @@
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
+from tensorflow.python import keras
+from tensorflow.python.keras import layers
 
 dataset = tf.data.experimental.make_csv_dataset("ml_models/data/processed/training_data.csv", batch_size=32)
 

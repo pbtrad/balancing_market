@@ -3,10 +3,12 @@ import requests
 import pandas as pd
 from datetime import datetime
 
-RAW_PATH = os.path.join("app", "ml_models", "data", "raw")
+RAW_PATH = os.path.join("/app", "ml_models", "data", "raw")
+print(RAW_PATH)
 
 if not os.path.exists(RAW_PATH):
-    print(f"Warning: {RAW_PATH} does not exist. Please create it manually.")
+    os.makedirs(RAW_PATH)
+    print(f"Created directory: {RAW_PATH}")
 else:
     print(f"Using existing directory: {RAW_PATH}")
 
@@ -38,7 +40,7 @@ def fetch_eirgrid_data(data_type):
             data = response.json()
             df = pd.DataFrame(data)
 
-            csv_filename = f"{RAW_PATH}{data_type}_{CSV_DATE}.csv"
+            csv_filename = os.path.join(RAW_PATH, f"{data_type}_{CSV_DATE}.csv")
             df.to_csv(csv_filename, index=False)
             print(f"{data_type} data saved to {csv_filename}")
 
