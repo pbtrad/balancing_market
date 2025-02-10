@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
+from sklearn.discriminant_analysis import StandardScaler
 
 RAW_PATH = "app/ml_models/data/raw"
 PROCESSED_PATH = "app/ml_models/data/processed"

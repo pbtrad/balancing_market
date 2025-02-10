@@ -1,6 +1,6 @@
 import os
 
-from app.ml_models.utils.data_preprocessing import preprocess_data
+from ml_models.utils.data_preprocessing import preprocess_data
 
 RAW_PATH = "ml_models/data/raw"
 CLEANED_PATH = "ml_models/data/cleaned"
