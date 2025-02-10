@@ -56,29 +56,29 @@ services:
       - ./app/ml_models/data:/app/ml_models/data
     command: ["python", "app/data_sources/process_data.py"]
 
-  convert_to_tfrecord:
+  data_preprocessing:
     build:
       context: .
-    container_name: convert_to_tfrecord
+    container_name: data_preprocessing
     depends_on:
       - process_data
     env_file:
       - .env
     volumes:
       - ./app/ml_models/data:/app/ml_models/data
-    command: ["python", "app/ml_models/utils/convert_to_tfrecord.py"]
+    command: ["python", "app/ml_models/utils/data_preprocessing.py"]
 
-  data_preprocessing:
+  convert_to_tfrecord:
     build:
       context: .
-    container_name: data_preprocessing
+    container_name: convert_to_tfrecord
     depends_on:
-      - eirgrid_api
+      - data_preprocessing
     env_file:
       - .env
     volumes:
       - ./app/ml_models/data:/app/ml_models/data
-    command: ["python", "app/ml_models/utils/data_preprocessing.py"]
+    command: ["python", "app/ml_models/utils/convert_to_tfrecord.py"]
 
   train_model:
     build:
