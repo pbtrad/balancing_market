@@ -9,7 +9,6 @@ os.makedirs(RAW_PATH, exist_ok=True)
 os.makedirs(PROCESSED_PATH, exist_ok=True)
 
 
-
 def serialize_example(features, label):
     """Converts a single data row to TFRecord format."""
     feature_dict = {

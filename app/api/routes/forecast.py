@@ -10,7 +10,7 @@ router = APIRouter()
 def predict_demand(features: List[float]):
     if not features or len(features) == 0:
         raise HTTPException(status_code=400, detail="No input features provided.")
-    
+
     try:
         prediction = predict(features)
         forecasted_demand = float(prediction[0])
