@@ -37,6 +37,7 @@ Start a SageMaker training job, pointing it to the data in S3.
 Deploy the trained model on SageMaker for inference.
 
 **Infrastructure as Code**
+
 Networking: VPC, subnets, security groups etc
 
 Database: RDS instance (postgres), will need read replica if I decide to use Grafana.
