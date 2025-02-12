@@ -1,0 +1,14 @@
+Resources:
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref APITaskDefinition
+      DesiredCount: 2
+
+  SageMakerNotebookInstance:
+    Type: AWS::SageMaker::NotebookInstance
+    Properties:
+      InstanceType: ml.t3.medium # will have to check prices
+      RoleArn: !Ref SageMakerRole
+      SubnetId: !Ref PublicSubnet
