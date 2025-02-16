@@ -1,14 +1,175 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Application stack for deploying Lambda functions, SageMaker, ECS, and RDS"
+
+Parameters:
+  ComputeStackName:
+    Type: String
+    Description: "Name of the compute stack to import values from"
+
 Resources:
-  ECSService:
-    Type: AWS::ECS::Service
+  ScraperFunction:
+    Type: AWS::Lambda::Function
     Properties:
-      Cluster: !Ref ECSCluster
-      TaskDefinition: !Ref APITaskDefinition
-      DesiredCount: 2
+      FunctionName: "ScraperFunction"
+      Runtime: python3.9
+      Handler: lambda_function.handler
+      Code:
+        S3Bucket: !ImportValue 
+          Fn::Sub: ${ComputeStackName}-DataBucketName
+        S3Key: lambda/scraper_function.zip
+      MemorySize: 256
+      Timeout: 300
+      Role: !ImportValue 
+        Fn::Sub: ${ComputeStackName}-LambdaRoleArn
+      Environment:
+        Variables:
+          BUCKET_NAME: !ImportValue 
+            Fn::Sub: ${ComputeStackName}-DataBucketName
+      TracingConfig:
+        Mode: Active
+
+  ScraperSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: "rate(1 day)"
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt ScraperFunction.Arn
+          Id: "ScraperTarget"
+
+  ScraperPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ScraperFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ScraperSchedule.Arn
 
   SageMakerNotebookInstance:
     Type: AWS::SageMaker::NotebookInstance
     Properties:
-      InstanceType: ml.t3.medium # will have to check prices
-      RoleArn: !Ref SageMakerRole
-      SubnetId: !Ref PublicSubnet
+      NotebookInstanceName: "DataProcessingNotebook"
+      InstanceType: ml.t3.medium
+      RoleArn: !ImportValue 
+        Fn::Sub: ${ComputeStackName}-SageMakerRoleArn
+      VolumeSizeInGB: 10
+      DirectInternetAccess: Enabled
+      PlatformIdentifier: notebook-al2-v2
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: "ApplicationCluster"
+
+  ECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: "ApplicationTask"
+      NetworkMode: awsvpc
+      RequiresCompatibilities: ["FARGATE"]
+      Cpu: "256"
+      Memory: "512"
+      ContainerDefinitions:
+        - Name: "ApplicationContainer"
+          Image: "<YOUR_DOCKER_IMAGE_URI>"
+          Essential: true
+          Environment:
+            - Name: DATABASE_URL
+              Value: !Ref RDSInstanceEndpoint
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: "/ecs/application"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: "ecs"
+
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref ECSTaskDefinition
+      DesiredCount: 2
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref ApplicationSecurityGroup
+          Subnets:
+            - !Ref PublicSubnet
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: "application-db"
+      Engine: postgres
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: 20
+      MasterUsername: "admin"
+      MasterUserPassword: !Ref DBPassword
+      VPCSecurityGroups:
+        - !Ref DatabaseSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      BackupRetentionPeriod: 7
+      MultiAZ: false
+      PubliclyAccessible: false
+
+  ApplicationSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security group for ECS tasks"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security group for RDS"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.1.0/24"
+      MapPublicIpOnLaunch: true
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: "Subnet group for RDS"
+      SubnetIds:
+        - !Ref PublicSubnet
+
+Outputs:
+  ECSClusterName:
+    Description: "Name of the ECS cluster"
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub "${AWS::StackName}-ECSClusterName"
+
+  RDSInstanceEndpoint:
+    Description: "Endpoint of the RDS instance"
+    Value: !GetAtt RDSInstance.Endpoint.Address
+    Export:
+      Name: !Sub "${AWS::StackName}-RDSInstanceEndpoint"
+
+  SageMakerNotebookInstanceName:
+    Description: "Name of the SageMaker Notebook instance"
+    Value: !Ref SageMakerNotebookInstance
+    Export:
+      Name: !Sub "${AWS::StackName}-SageMakerNotebookInstance"
