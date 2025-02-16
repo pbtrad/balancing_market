@@ -19,7 +19,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY alembic.ini /app/
 COPY ./migrations /app/migrations
-COPY ./app /app/app
+COPY ./app /app
 COPY start.sh /app/
 RUN chmod +x /app/start.sh
 
