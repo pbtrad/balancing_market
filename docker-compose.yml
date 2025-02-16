@@ -12,7 +12,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "5432:5432"
 
   api:
     build:
@@ -21,76 +21,16 @@ services:
     container_name: balancing_market_api
     environment:
       DATABASE_URL: postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      SAGEMAKER_ENDPOINT: ${SAGEMAKER_ENDPOINT}
     depends_on:
       - db
     env_file:
       - .env
-    volumes:
-      - ./app/ml_models/data:/app/ml_models/data
-      - ./app/ml_models/models:/app/ml_models/models
     ports:
       - "8000:8000"
     command: ["/app/start.sh"]
 
-  eirgrid_api:
-    build:
-      context: .
-    container_name: eirgrid_api_fetch
-    depends_on:
-      - db
-    env_file:
-      - .env
-    volumes:
-      - ./app/ml_models/data:/app/ml_models/data
-    command: ["python", "app/data_sources/eirgrid_api.py"]
-
-  data_preprocessing:
-    build:
-      context: .
-    container_name: data_processing
-    depends_on:
-      - eirgrid_api
-    env_file:
-      - .env
-    volumes:
-      - ./app/ml_models/data:/app/ml_models/data
-    command: ["python", "app/ml_models/utils/data_processing.py"]
-
-  convert_to_tfrecord:
-    build:
-      context: .
-    container_name: convert_to_tfrecord
-    depends_on:
-      - data_preprocessing
-    env_file:
-      - .env
-    volumes:
-      - ./app/ml_models/data:/app/ml_models/data
-    command: ["python", "app/ml_models/utils/convert_to_tfrecord.py"]
-
-  train_model:
-    build:
-      context: .
-    container_name: train_model
-    depends_on:
-      - convert_to_tfrecord
-    env_file:
-      - .env
-    volumes:
-      - ./app/ml_models/data:/app/ml_models/data
-    command: ["python", "app/ml_models/training/train_model.py"]
-
-  inference:
-    build:
-      context: .
-    container_name: inference
-    depends_on:
-      - train_model
-    env_file:
-      - .env
-    volumes:
-      - ./app/ml_models/data:/app/ml_models/data
-    command: ["python", "app/ml_models/inference/predict.py"]
-
 volumes:
   pg_data:
+
