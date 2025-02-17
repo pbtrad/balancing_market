@@ -2,6 +2,7 @@ import ast
 import tensorflow as tf
 import pandas as pd
 import os
+from app.utils.logging import logger
 
 RAW_PATH = os.path.join("/app", "ml_models", "data", "raw")
 PROCESSED_PATH = os.path.join("/app", "ml_models", "data", "processed")
@@ -24,7 +25,7 @@ def convert_csv_to_tfrecord(csv_filename, tfrecord_filename):
         for f, l in zip(features, labels):
             writer.write(serialize_example(f, l))
 
-    print(f"Converted {csv_filename} to {tfrecord_filename}")
+    logger.info(f"Converted {csv_filename} to {tfrecord_filename}")
 
 
 def serialize_example(feature, label):

@@ -1,6 +1,7 @@
 import boto3
 import os
 import argparse
+from app.utils.logging import logger
 
 def upload_to_s3(bucket_name, local_path, s3_prefix=""):
     s3_client = boto3.client('s3')
@@ -8,7 +9,7 @@ def upload_to_s3(bucket_name, local_path, s3_prefix=""):
         for file in files:
             file_path = os.path.join(root, file)
             s3_key = os.path.join(s3_prefix, file).replace("\\", "/")
-            print(f"Uploading {file_path} to s3://{bucket_name}/{s3_key}")
+            logger.info(f"Uploading {file_path} to s3://{bucket_name}/{s3_key}")
             s3_client.upload_file(file_path, bucket_name, s3_key)
 
 def main():

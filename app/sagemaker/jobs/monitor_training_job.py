@@ -1,18 +1,19 @@
 import boto3
 import time
 import argparse
+from app.utils.logging import logger
 
 def monitor_training_job(job_name):
     sm_client = boto3.client('sagemaker')
     
-    print(f"Monitoring training job: {job_name}")
+    logger.info(f"Monitoring training job: {job_name}")
     while True:
         response = sm_client.describe_training_job(TrainingJobName=job_name)
         status = response["TrainingJobStatus"]
-        print(f"Training job status: {status}")
+        logger.info(f"Training job status: {status}")
         
         if status in ["Completed", "Failed", "Stopped"]:
-            print(f"Training job ended with status: {status}")
+            logger.info(f"Training job ended with status: {status}")
             break
         
         time.sleep(30)

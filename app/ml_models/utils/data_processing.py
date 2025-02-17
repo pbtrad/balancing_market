@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from app.utils.logging import logger
 
 RAW_PATH = "app/ml_models/data/raw"
 CLEANED_PATH = "app/ml_models/data/cleaned"
@@ -18,7 +19,7 @@ def clean_data(input_csv, output_csv):
     df.fillna(df.median(), inplace=True)
 
     df.to_csv(output_csv, index=False)
-    print(f"Cleaned data saved to {output_csv}")
+    logger.info(f"Cleaned data saved to {output_csv}")
 
 
 # Preprocesses data by scaling all numeric columns
@@ -29,7 +30,7 @@ def preprocess_data(csv_path, output_path):
     df[df.columns] = scaler.fit_transform(df)
 
     df.to_csv(output_path, index=False)
-    print(f"Processed data saved to {output_path}")
+    logger.info(f"Processed data saved to {output_path}")
 
 
 def main():
@@ -39,13 +40,13 @@ def main():
             cleaned_file = os.path.join(CLEANED_PATH, filename)
             processed_file = os.path.join(PROCESSED_PATH, filename)
 
-            print(f"Processing file: {raw_file}")
+            logger.info(f"Processing file: {raw_file}")
 
             clean_data(raw_file, cleaned_file)
 
             preprocess_data(cleaned_file, processed_file)
 
-            print(f"Completed processing for: {filename}\n")
+            logger.info(f"Completed processing for: {filename}\n")
 
 
 if __name__ == "__main__":

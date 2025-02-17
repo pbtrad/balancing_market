@@ -1,6 +1,7 @@
 import boto3
 import argparse
 import sys
+from app.utils.logging import logger
 
 
 def submit_training_job(
@@ -37,10 +38,10 @@ def submit_training_job(
             },
             StoppingCondition={"MaxRuntimeInSeconds": 3600},
         )
-        print("Training job submitted successfully!")
-        print(f"Training Job ARN: {response['TrainingJobArn']}")
+        logger.info("Training job submitted successfully!")
+        logger.info(f"Training Job ARN: {response['TrainingJobArn']}")
     except Exception as e:
-        print(f"Error submitting training job: {e}")
+        logger.error(f"Error submitting training job: {e}")
         sys.exit(1)
 
 

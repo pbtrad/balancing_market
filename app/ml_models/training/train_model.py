@@ -3,6 +3,7 @@ import argparse
 import os
 from tensorflow.python import keras
 from tensorflow.python.keras import layers
+from app.utils.logging import logger
 
 
 def main():
@@ -36,7 +37,7 @@ def main():
     # Save the model to the SageMaker model directory
     model_dir = "/opt/ml/model"
     model.save(model_dir)
-    print(f"Model saved to {model_dir}")
+    logger.info(f"Model saved to {model_dir}")
 
 
 if __name__ == "__main__":
