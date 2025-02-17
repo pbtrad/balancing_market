@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Compute stack for S3 bucket, IAM roles for SageMaker, Lambda, and ECR setup."
+Description: "Compute stack for S3 bucket, IAM roles for SageMaker and Lambda."
 
 Resources:
   DataBucket:
@@ -60,7 +60,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: S3AndECRAccessForLambda
+        - PolicyName: S3AccessForLambda
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -74,12 +74,9 @@ Resources:
                   - !Sub "${DataBucket.Arn}/*"
               - Effect: Allow
                 Action:
-                  - ecr:GetAuthorizationToken
-                  - ecr:BatchCheckLayerAvailability
-                  - ecr:GetDownloadUrlForLayer
-                  - ecr:DescribeRepositories
-                  - ecr:ListImages
-                  - ecr:DescribeImages
+                  - sagemaker:CreateTrainingJob
+                  - sagemaker:DescribeTrainingJob
+                  - sagemaker:StopTrainingJob
                 Resource: "*"
               - Effect: Allow
                 Action:
@@ -87,30 +84,6 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: "arn:aws:logs:*:*:*"
-
-  ECRRepository:
-    Type: AWS::ECR::Repository
-    Properties:
-      RepositoryName: !Sub "${AWS::StackName}-app-repository"
-      LifecyclePolicy:
-        LifecyclePolicyText: |
-          {
-            "rules": [
-              {
-                "rulePriority": 1,
-                "description": "Expire untagged images after 30 days",
-                "selection": {
-                  "tagStatus": "untagged",
-                  "countType": "sinceImagePushed",
-                  "countUnit": "days",
-                  "countNumber": 30
-                },
-                "action": {
-                  "type": "expire"
-                }
-              }
-            ]
-          }
 
 Outputs:
   DataBucketName:
@@ -130,9 +103,3 @@ Outputs:
     Value: !GetAtt LambdaExecutionRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-LambdaRoleArn"
-
-  ECRRepositoryUri:
-    Description: "URI of the ECR repository"
-    Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}-app-repository"
-    Export:
-      Name: !Sub "${AWS::StackName}-ECRRepositoryUri"
