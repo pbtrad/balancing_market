@@ -15,18 +15,28 @@ aws cloudformation deploy \
 
 echo "Compute Stack deployed successfully."
 
-# Retrieve Compute Stack Name
-COMPUTE_STACK_OUTPUT=$(aws cloudformation describe-stacks \
-  --stack-name $COMPUTE_STACK_NAME \
-  --query "Stacks[0].StackName" \
+# Retrieve Compute Stack Outputs
+DATA_BUCKET_NAME=$(aws cloudformation list-exports \
+  --query "Exports[?Name=='${COMPUTE_STACK_NAME}-DataBucketName'].Value" \
   --output text)
 
-if [[ -z "$COMPUTE_STACK_OUTPUT" ]]; then
-  echo "Error: Failed to retrieve Compute Stack Name."
+SAGEMAKER_ROLE_ARN=$(aws cloudformation list-exports \
+  --query "Exports[?Name=='${COMPUTE_STACK_NAME}-SageMakerRoleArn'].Value" \
+  --output text)
+
+LAMBDA_ROLE_ARN=$(aws cloudformation list-exports \
+  --query "Exports[?Name=='${COMPUTE_STACK_NAME}-LambdaRoleArn'].Value" \
+  --output text)
+
+if [[ -z "$DATA_BUCKET_NAME" || -z "$SAGEMAKER_ROLE_ARN" || -z "$LAMBDA_ROLE_ARN" ]]; then
+  echo "Error: Missing required values from Compute Stack outputs."
   exit 1
 fi
 
-echo "Compute Stack Name: $COMPUTE_STACK_OUTPUT"
+echo "Compute Stack Outputs:"
+echo "DataBucketName: $DATA_BUCKET_NAME"
+echo "SageMakerRoleArn: $SAGEMAKER_ROLE_ARN"
+echo "LambdaRoleArn: $LAMBDA_ROLE_ARN"
 
 # Deploy Application Stack
 echo "Deploying Application Stack..."
@@ -34,7 +44,7 @@ aws cloudformation deploy \
   --stack-name $APPLICATION_STACK_NAME \
   --template-file deploy/cloudformation/application/application.yml \
   --capabilities CAPABILITY_NAMED_IAM \
-  --parameter-overrides ComputeStackName=$COMPUTE_STACK_OUTPUT
+  --parameter-overrides \
+    ComputeStackName=$COMPUTE_STACK_NAME
 
 echo "Application Stack deployed successfully."
-
