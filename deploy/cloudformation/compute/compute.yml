@@ -46,58 +46,42 @@ Resources:
                   - !GetAtt DataBucket.Arn
                   - !Sub "${DataBucket.Arn}/*"
 
-    LambdaExecutionRole:
-      Type: AWS::IAM::Role
-      Properties:
-        RoleName: !Sub "${AWS::StackName}-lambda-role"
-        AssumeRolePolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service: lambda.amazonaws.com
-              Action: "sts:AssumeRole"
-        ManagedPolicyArns:
-          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole  # Allows Lambda to run
-
-        Policies:
-          - PolicyName: S3AccessForLambda
-            PolicyDocument:
-              Version: "2012-10-17"
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - s3:GetObject
-                    - s3:PutObject
-                    - s3:ListBucket
-                  Resource:
-                    - !GetAtt DataBucket.Arn
-                    - !Sub "${DataBucket.Arn}/*"
-
-          - PolicyName: SageMakerTrainingAccess
-            PolicyDocument:
-              Version: "2012-10-17"
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - sagemaker:CreateTrainingJob
-                    - sagemaker:DescribeTrainingJob
-                    - sagemaker:StopTrainingJob
-                    - sagemaker:ListTrainingJobs
-                    - sagemaker:InvokeEndpoint
-                  Resource: "*"
-
-          - PolicyName: CloudWatchLoggingForLambda
-            PolicyDocument:
-              Version: "2012-10-17"
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - logs:CreateLogGroup
-                    - logs:CreateLogStream
-                    - logs:PutLogEvents
-                  Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-*"
-
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-lambda-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3AccessForLambda
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt DataBucket.Arn
+                  - !Sub "${DataBucket.Arn}/*"
+        - PolicyName: CloudWatchLoggingForLambda
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-*"
 
 Outputs:
   DataBucketName:
