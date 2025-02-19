@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Application stack for deploying Lambda functions and SageMaker."
+Description: "Application stack for deploying Lambda functions, SageMaker, and logging."
 
 Parameters:
   ComputeStackName:
@@ -7,41 +7,59 @@ Parameters:
     Description: "Name of the compute stack to import values from"
 
 Resources:
+
   ScraperFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: "ScraperFunction"
+      FunctionName: !Sub "${AWS::StackName}-scraper"
       Runtime: python3.9
-      Handler: index.handler
+      Handler: eirgrid_scraper.handler
       Code:
-        ZipFile: |
-          import boto3
-          def handler(event, context):
-              # Your scraping code here
-              return {'statusCode': 200}
-      MemorySize: 128
+        S3Bucket: !ImportValue balancing-market-compute-DataBucketName
+        S3Key: "lambda/eirgrid_scraper.zip"
+      MemorySize: 256
       Timeout: 300
-      Role: !ImportValue 
-        Fn::Sub: ${ComputeStackName}-LambdaRoleArn
+      Role: !ImportValue balancing-market-compute-LambdaRoleArn
       Environment:
         Variables:
-          BUCKET_NAME: !ImportValue 
-            Fn::Sub: ${ComputeStackName}-DataBucketName
+          BUCKET_NAME: !ImportValue balancing-market-compute-DataBucketName
+
+  ScraperSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: "rate(1 day)"
+      Targets:
+        - Arn: !GetAtt ScraperFunction.Arn
+          Id: "ScraperLambdaTarget"
+
+  ScraperPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ScraperFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ScraperSchedule.Arn
 
   SageMakerNotebookInstance:
     Type: AWS::SageMaker::NotebookInstance
     Properties:
       NotebookInstanceName: "DataProcessingNotebook"
       InstanceType: ml.t3.medium
-      RoleArn: !ImportValue 
-        Fn::Sub: ${ComputeStackName}-SageMakerRoleArn
+      RoleArn: !ImportValue balancing-market-compute-SageMakerRoleArn
       VolumeSizeInGB: 10
       DirectInternetAccess: Enabled
       PlatformIdentifier: notebook-al2-v2
 
 Outputs:
+  ScraperFunctionArn:
+    Description: "ARN of the Scraper Lambda function"
+    Value: !GetAtt ScraperFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ScraperFunctionArn"
+
   SageMakerNotebookInstanceName:
     Description: "Name of the SageMaker Notebook instance"
     Value: !Ref SageMakerNotebookInstance
     Export:
       Name: !Sub "${AWS::StackName}-SageMakerNotebookInstance"
+
