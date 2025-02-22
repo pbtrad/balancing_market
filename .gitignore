@@ -1,0 +1,75 @@
+# 📂 Python Cache Files
+__pycache__/
+*.py[cod]
+*.so
+*.log
+
+# 📂 Virtual Environments
+venv/
+.env
+.envrc
+*.env
+
+# 📂 Logs & Debug Files
+logs/
+*.log
+nohup.out
+
+# 📂 Database Files
+*.sqlite
+*.db
+*.sqlite3
+migrations/
+
+# 📂 ML Model Checkpoints
+app/ml_models/*.h5
+app/ml_models/*.pkl
+app/ml_models/__pycache__/
+
+# 📂 Docker & Build Files
+*.Dockerfile.swp
+docker-compose.override.yml
+.dockerignore
+
+# 📂 IDE / Editor Files
+.vscode/
+.idea/
+*.iml
+
+# 📂 Jupyter Notebooks Checkpoints (if using notebooks for ML training)
+.ipynb_checkpoints/
+
+# 📂 Node.js Files (if adding a frontend)
+node_modules/
+package-lock.json
+
+# 📂 Compiled Python Files
+*.pyc
+*.pyo
+
+# 📂 Terraform / Cloud Configuration Files (If using IaC)
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+
+# 📂 CI/CD and Deployment Secrets (AWS, GCP, etc.)
+secrets/
+*.pem
+*.key
+config.json
+.DS_Store
+app/ml_models/models/checkpoint/
+app/ml_models/models/model.h5
+
+# AWS credentials and local config
+.aws/
+*.pem
+lambda_package/
+**/lambda_package/
+*.zip
+**/eirgrid_scraper.zip
+
+venv/
+env/
+package/
+**/package/" >> .gitignore
