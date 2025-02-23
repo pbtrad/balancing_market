@@ -1,29 +1,23 @@
-from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey, Enum
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, Float, String, DateTime, Enum
+from enum import Enum as PyEnum
 from datetime import datetime
-from database import Base
 
+from app.database.database import Base
 
-class MarketTypeEnum(Enum):
-    DAY_AHEAD = "Day-Ahead Market"
-    INTRADAY = "Intraday Market"
-    BALANCING = "Balancing Market"
-
+class MarketTypeEnum(PyEnum):
+    DAM = "DAM"  # Day-Ahead Market
+    IDM = "IDM"  # Intra-Day Market
+    BM = "BM"    # Balancing Market
 
 class Forecast(Base):
     """
     Forecast model to store price, demand, and generation forecasts.
     """
-
     __tablename__ = "forecasts"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    timestamp = Column(
-        DateTime, index=True, default=datetime.now(datetime.UTC)
-    )  # Forecast creation time
-    forecast_time = Column(
-        DateTime, index=True, nullable=False
-    )  # Time the forecast is for
+    timestamp = Column(DateTime, index=True, default=datetime.utcnow)  # Forecast creation time
+    forecast_time = Column(DateTime, index=True, nullable=False)  # Time the forecast is for
     market_type = Column(Enum(MarketTypeEnum), nullable=False)  # DAM, IDM, BM
     forecast_type = Column(String, nullable=False)  # "Price", "Demand", "Generation"
     region = Column(String, nullable=False, default="ALL")  # Ireland, NI
@@ -33,19 +27,15 @@ class Forecast(Base):
     def __repr__(self):
         return f"<Forecast {self.forecast_time} - {self.forecast_type}: {self.value}>"
 
-
 class ActualData(Base):
     """
     Actual recorded values for model evaluation.
     """
-
     __tablename__ = "actual_data"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     timestamp = Column(DateTime, index=True, default=datetime.utcnow)
-    actual_time = Column(
-        DateTime, index=True, nullable=False
-    )  # Time the actual data was recorded
+    actual_time = Column(DateTime, index=True, nullable=False)  # Time the actual data was recorded
     market_type = Column(Enum(MarketTypeEnum), nullable=False)
     data_type = Column(String, nullable=False)  # "Price", "Demand", "Generation"
     region = Column(String, nullable=False, default="ALL")
@@ -54,12 +44,10 @@ class ActualData(Base):
     def __repr__(self):
         return f"<ActualData {self.actual_time} - {self.data_type}: {self.value}>"
 
-
 class ForecastEvaluation(Base):
     """
     Model evaluation results comparing forecasted vs actual values.
     """
-
     __tablename__ = "forecast_evaluation"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
