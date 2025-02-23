@@ -13,6 +13,11 @@ services:
       - pg_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U balancing_user -d balancing_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   api:
     build:
@@ -20,17 +25,13 @@ services:
     restart: always
     container_name: balancing_market_api
     environment:
-      DATABASE_URL: postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
-      SAGEMAKER_ENDPOINT: ${SAGEMAKER_ENDPOINT}
+      - DATABASE_URL=${DATABASE_URL}
     depends_on:
-      - db
-    env_file:
-      - .env
+      db:
+        condition: service_healthy
     ports:
       - "8000:8000"
     command: ["/app/start.sh"]
 
 volumes:
   pg_data:
-
