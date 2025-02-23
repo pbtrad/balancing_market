@@ -7,6 +7,7 @@ from app.database.models import Forecast, ActualData, ForecastEvaluation, Market
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class PredictionService:
     def __init__(self, db: Session):
         self.db = db
@@ -18,7 +19,7 @@ class PredictionService:
         forecast_type: str,
         value: float,
         source: str = "LSTM",
-        region: str = "ALL"
+        region: str = "ALL",
     ) -> Forecast:
         """Create a new forecast record"""
         forecast = Forecast(
@@ -43,7 +44,7 @@ class PredictionService:
         market_type: MarketTypeEnum,
         data_type: str,
         value: float,
-        region: str = "ALL"
+        region: str = "ALL",
     ) -> ActualData:
         """Update actual values after market data is available"""
         actual_data = ActualData(
@@ -51,7 +52,7 @@ class PredictionService:
             market_type=market_type,
             data_type=data_type,
             value=value,
-            region=region
+            region=region,
         )
 
         self.db.add(actual_data)
@@ -65,23 +66,31 @@ class PredictionService:
         self,
         forecast_time: datetime,
         market_type: MarketTypeEnum,
-        model_name: str = "LSTM"
+        model_name: str = "LSTM",
     ) -> Optional[ForecastEvaluation]:
         """Evaluate forecast accuracy by comparing it to actual values"""
         forecast = (
             self.db.query(Forecast)
-            .filter(Forecast.forecast_time == forecast_time, Forecast.market_type == market_type)
+            .filter(
+                Forecast.forecast_time == forecast_time,
+                Forecast.market_type == market_type,
+            )
             .first()
         )
 
         actual = (
             self.db.query(ActualData)
-            .filter(ActualData.actual_time == forecast_time, ActualData.market_type == market_type)
+            .filter(
+                ActualData.actual_time == forecast_time,
+                ActualData.market_type == market_type,
+            )
             .first()
         )
 
         if not forecast or not actual:
-            logger.warning(f"No matching forecast or actual data found for {forecast_time}.")
+            logger.warning(
+                f"No matching forecast or actual data found for {forecast_time}."
+            )
             return None
 
         error = abs(actual.value - forecast.value)
@@ -93,7 +102,7 @@ class PredictionService:
             forecast_value=forecast.value,
             error=error,
             mae=error,
-            rmse=error ** 2,  # Placeholder for RMSE calculation
+            rmse=error**2,  # Placeholder for RMSE calculation
         )
 
         self.db.add(evaluation)
@@ -103,7 +112,9 @@ class PredictionService:
         logger.info(f"Evaluated forecast: {evaluation}")
         return evaluation
 
-    def get_recent_forecasts(self, market_type: MarketTypeEnum, limit: int = 24) -> List[Forecast]:
+    def get_recent_forecasts(
+        self, market_type: MarketTypeEnum, limit: int = 24
+    ) -> List[Forecast]:
         """Retrieve most recent forecasts"""
         forecasts = (
             self.db.query(Forecast)
