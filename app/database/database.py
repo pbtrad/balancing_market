@@ -6,19 +6,14 @@ import os
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError(
-        "DATABASE_URL environment variable is not set."
-    )
+    raise ValueError("DATABASE_URL environment variable is not set.")
 
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    echo=True
-)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, echo=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
 
 def get_db():
     db = SessionLocal()
