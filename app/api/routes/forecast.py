@@ -3,7 +3,7 @@ import os
 import numpy as np
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.database.database import get_db
 from app.sagemaker.jobs.submit_training_job import submit_training_job
 from app.ml_models.inference.predict import PredictionService
 from datetime import time
