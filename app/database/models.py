@@ -1,9 +1,20 @@
-from sqlalchemy import Column, Index, Integer, Float, String, DateTime, Enum, ForeignKey, TypeDecorator
+from sqlalchemy import (
+    Column,
+    Index,
+    Integer,
+    Float,
+    String,
+    DateTime,
+    Enum,
+    ForeignKey,
+    TypeDecorator,
+)
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from enum import Enum as PyEnum
 
 from app.database.database import Base
+
 
 class StringEnum(TypeDecorator):
     impl = String
@@ -17,11 +28,12 @@ class StringEnum(TypeDecorator):
 
     def process_result_value(self, value, dialect):
         return self._enumclass(value) if value else None
-    
+
+
 class MarketTypeEnum(PyEnum):
     DAM = "DAM"  # Day-Ahead Market
     IDM = "IDM"  # Intra-Day Market
-    BM = "BM"    # Balancing Market
+    BM = "BM"  # Balancing Market
 
 
 class ForecastTypeEnum(PyEnum):
@@ -33,25 +45,33 @@ class ForecastTypeEnum(PyEnum):
 
 ### BASE FORECAST MODEL ###
 class BaseForecast(Base):
-    """ Abstract Base Model for Forecasts """
+    """Abstract Base Model for Forecasts"""
+
     __abstract__ = True
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    timestamp = Column(DateTime, index=True, default=datetime.utcnow, nullable=False)  # Time of forecast creation
-    forecast_time = Column(DateTime, index=True, nullable=False)  # Time the forecast is for
+    timestamp = Column(
+        DateTime, index=True, default=datetime.utcnow, nullable=False
+    )  # Time of forecast creation
+    forecast_time = Column(
+        DateTime, index=True, nullable=False
+    )  # Time the forecast is for
     market_type = Column(StringEnum(MarketTypeEnum), nullable=False)  # DAM, IDM, BM
     region = Column(String, nullable=False, default="ALL")  # Market region
     source = Column(String, nullable=False)  # Model used
 
-    
+
 ### DEMAND FORECAST ###
 class DemandForecast(BaseForecast):
-    """ Forecasted & Actual Demand in MW """
+    """Forecasted & Actual Demand in MW"""
+
     __tablename__ = "demand_forecasts"
 
     predicted_demand_mw = Column(Float, nullable=False)
     actual_demand_mw = Column(Float, nullable=True)
-    demand_error = Column(Float, nullable=True)  # Difference between predicted & actual demand
+    demand_error = Column(
+        Float, nullable=True
+    )  # Difference between predicted & actual demand
 
     def __repr__(self):
         return f"<DemandForecast {self.forecast_time}: {self.predicted_demand_mw} MW>"
@@ -59,7 +79,8 @@ class DemandForecast(BaseForecast):
 
 ### PRICE FORECAST ###
 class PriceForecast(BaseForecast):
-    """ Forecasted & Actual Market Prices in €/MWh """
+    """Forecasted & Actual Market Prices in €/MWh"""
+
     __tablename__ = "price_forecasts"
 
     predicted_price = Column(Float, nullable=False)
@@ -72,12 +93,15 @@ class PriceForecast(BaseForecast):
 
 ### GENERATION FORECAST ###
 class GenerationForecast(BaseForecast):
-    """ Forecasted & Actual Generation in MW """
+    """Forecasted & Actual Generation in MW"""
+
     __tablename__ = "generation_forecasts"
 
     predicted_generation_mw = Column(Float, nullable=False)
     actual_generation_mw = Column(Float, nullable=True)
-    generation_error = Column(Float, nullable=True)  # Difference between predicted & actual generation
+    generation_error = Column(
+        Float, nullable=True
+    )  # Difference between predicted & actual generation
 
     def __repr__(self):
         return f"<GenerationForecast {self.forecast_time}: {self.predicted_generation_mw} MW>"
@@ -85,12 +109,15 @@ class GenerationForecast(BaseForecast):
 
 ### IMBALANCE FORECAST ###
 class ImbalanceForecast(BaseForecast):
-    """ Forecasted & Actual Imbalance in MW """
+    """Forecasted & Actual Imbalance in MW"""
+
     __tablename__ = "imbalance_forecasts"
 
     predicted_imbalance_mw = Column(Float, nullable=False)
     actual_imbalance_mw = Column(Float, nullable=True)
-    imbalance_error = Column(Float, nullable=True)  # Difference between predicted & actual imbalance
+    imbalance_error = Column(
+        Float, nullable=True
+    )  # Difference between predicted & actual imbalance
 
     def __repr__(self):
         return f"<ImbalanceForecast {self.forecast_time}: {self.predicted_imbalance_mw} MW>"
@@ -102,6 +129,7 @@ class ForecastEvaluation(Base):
     Evaluation of Forecast Performance.
     Used for ML model comparison (e.g., Mean Absolute Error, RMSE).
     """
+
     __tablename__ = "forecast_evaluations"
     __table_args__ = (
         Index("idx_forecast_time_type", "forecast_time", "forecast_type"),
@@ -116,24 +144,29 @@ class ForecastEvaluation(Base):
     error = Column(Float, nullable=False)
     mae = Column(Float, nullable=False)
     rmse = Column(Float, nullable=False)
-    forecast_history = relationship("ForecastHistory", back_populates="forecast_evaluation", cascade="all, delete-orphan")
+    forecast_history = relationship(
+        "ForecastHistory",
+        back_populates="forecast_evaluation",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"<ForecastEvaluation {self.forecast_time} - {self.model_name}: Error {self.error}>"
 
 
-### RELATIONSHIPS (OPTIONAL) ###
 class ForecastHistory(Base):
     """
     Store historical forecasts for analysis.
     Links a forecast entry to its evaluation.
     """
+
     __tablename__ = "forecast_history"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     forecast_id = Column(Integer, ForeignKey("forecast_evaluations.id"), nullable=False)
-    forecast_evaluation = relationship("ForecastEvaluation", back_populates="forecast_history")
+    forecast_evaluation = relationship(
+        "ForecastEvaluation", back_populates="forecast_history"
+    )
 
     def __repr__(self):
         return f"<ForecastHistory ForecastID: {self.forecast_id}>"
-
