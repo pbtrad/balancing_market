@@ -13,7 +13,6 @@ BASE_URL = "https://reports.sem-o.com/api/v1/dynamic"
 ENDPOINTS = {
     "bm_025": "BM-025",  # Imbalance Price Report
     "bm_026": "BM-026",  # System Price
-    "bm_084": "BM-084",  # Currency exchange rates
     "bm_095": "BM-095",  # Market Cost View
 }
 
@@ -69,16 +68,6 @@ def parse_and_store_system_price(db: Session, data: list):
             logger.warning(f"BM-026 parse error: {e} | item: {item}")
 
 
-def parse_and_store_curr_exchange_rates(db: Session, data: list):
-    for item in data:
-        try:
-            timestamp = datetime.fromisoformat(item["StartTime"])
-            rate = float(item["ExchangeRate"])
-            logger.info(f"BM-084 exchange rate {timestamp}: {rate} EUR/GBP")
-        except Exception as e:
-            logger.warning(f"BM-084 parse error: {e} | item: {item}")
-
-
 def parse_and_store_market_cost_view(db: Session, data: list):
     for item in data:
         try:
@@ -104,10 +93,6 @@ def run_semo_scraper():
     logger.info("Fetching SEMO BM-026 system price data...")
     bm_026_data = fetch_report(ENDPOINTS["bm_026"], start.isoformat(), end.isoformat())
     parse_and_store_system_price(db, bm_026_data)
-
-    logger.info("Fetching SEMO BM-084 exchange rate data...")
-    bm_084_data = fetch_report(ENDPOINTS["bm_084"], start.isoformat(), end.isoformat())
-    parse_and_store_curr_exchange_rates(db, bm_084_data)
 
     logger.info("Fetching SEMO BM-095 cost view data...")
     bm_095_data = fetch_report(ENDPOINTS["bm_095"], start.isoformat(), end.isoformat())
