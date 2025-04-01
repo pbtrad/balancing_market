@@ -4,24 +4,25 @@ import boto3
 import requests
 import logging
 from datetime import datetime
-from sqlalchemy.orm import Session
-
-from app.database.database import get_db
-from app.database.models import DemandForecast, MarketTypeEnum
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # EirGrid API endpoints to fetch
+# ENDPOINTS = {
+#     "demandactual": "demand_actual",
+#     "demandforecast": "demand_forecast",
+#     "windactual": "wind_actual",
+#     "windforecast": "wind_forecast",
+#     "fuelmix": "fuel_mix",
+#     "co2emission": "co2_emission",
+#     "co2intensity": "co2_intensity",
+#     "interconnector": "interconnector",
+# }
+
 ENDPOINTS = {
     "demandactual": "demand_actual",
     "demandforecast": "demand_forecast",
-    "windactual": "wind_actual",
-    "windforecast": "wind_forecast",
-    "fuelmix": "fuel_mix",
-    "co2emission": "co2_emission",
-    "co2intensity": "co2_intensity",
-    "interconnector": "interconnector",
 }
 
 EIRGRID_API_URL = "https://www.eirgrid.ie/api/graph-data"
@@ -65,27 +66,6 @@ def upload_to_s3(bucket_name: str, data: dict):
     )
 
 
-def save_demand_forecast_to_db(db: Session, demand_json: dict):
-    """
-    Save structured demand forecast to Postgres from EirGrid data.
-    """
-    series = demand_json.get("data", [])
-    for point in series:
-        timestamp = datetime.utcfromtimestamp(point["unix"])
-        value = point.get("value")
-        if value is not None:
-            forecast = DemandForecast(
-                forecast_time=timestamp,
-                predicted_demand_mw=value,
-                market_type=MarketTypeEnum.DAM,
-                region="ALL",
-                source="eirgrid_api",
-            )
-            db.add(forecast)
-    db.commit()
-    logger.info(f"Saved {len(series)} demand forecast entries to the database")
-
-
 def handler(event=None, context=None):
     logger.info("Starting EirGrid scraper")
 
@@ -96,14 +76,9 @@ def handler(event=None, context=None):
         # Upload full raw data to S3
         upload_to_s3(BUCKET_NAME, data)
 
-        # Store parsed demand forecast in Postgres
-        if "demand_forecast" in data:
-            with next(get_db()) as db:
-                save_demand_forecast_to_db(db, data["demand_forecast"])
-
         return {
             "statusCode": 200,
-            "body": json.dumps("EirGrid data scraped, uploaded to S3, and saved to DB"),
+            "body": json.dumps("EirGrid data scraped and uploaded to S3"),
         }
 
     except Exception as e:
