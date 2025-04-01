@@ -1,8 +1,11 @@
 import logging
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 from app.database.models import Forecast, ActualData, ForecastEvaluation, MarketTypeEnum
+import joblib
+
+from app.feature_engineering.demand_features import generate_features_for_next_24h
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -126,3 +129,19 @@ class PredictionService:
 
         logger.info(f"Fetched {len(forecasts)} recent forecasts.")
         return forecasts
+
+    def run_forecast_for_next_24h(self):
+        model = joblib.load("models/demand_forecast_model.pkl")
+        future_features = generate_features_for_next_24h()
+        predictions = model.predict(future_features)
+
+        for i, value in enumerate(predictions):
+            forecast_time = datetime.utcnow().replace(
+                minute=0, second=0, microsecond=0
+            ) + timedelta(hours=i)
+            self.create_forecast(
+                forecast_time=forecast_time,
+                market_type=MarketTypeEnum.DAM,
+                forecast_type="DEMAND",
+                value=value,
+            )
