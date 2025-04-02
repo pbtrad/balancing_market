@@ -10,7 +10,7 @@ from datetime import time
 
 router = APIRouter()
 
-lambda_client = boto3.client("lambda")
+lambda_client = boto3.client("lambda", region_name=os.getenv("AWS_REGION", "eu-west-1"))
 s3_client = boto3.client("s3")
 
 LAMBDA_FUNCTION_NAME = os.getenv("SCRAPER_LAMBDA_NAME")
