@@ -2,7 +2,9 @@ import logging
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from typing import List, Optional
-from app.database.models import Forecast, ActualData, ForecastEvaluation, MarketTypeEnum
+from app.database.models import (DemandForecast, PriceForecast, 
+                               GenerationForecast, ImbalanceForecast, 
+                               ForecastEvaluation, MarketTypeEnum, ForecastTypeEnum)
 import joblib
 
 from app.feature_engineering.demand_features import generate_features_for_next_24h
@@ -19,115 +21,126 @@ class PredictionService:
         self,
         forecast_time: datetime,
         market_type: MarketTypeEnum,
-        forecast_type: str,
+        forecast_type: ForecastTypeEnum,
         value: float,
         source: str = "LSTM",
         region: str = "ALL",
-    ) -> Forecast:
+    ):
         """Create a new forecast record"""
-        forecast = Forecast(
-            forecast_time=forecast_time,
-            market_type=market_type,
-            forecast_type=forecast_type,
-            value=value,
-            source=source,
-            region=region,
-        )
-
+        if forecast_type == ForecastTypeEnum.DEMAND:
+            forecast = DemandForecast(
+                forecast_time=forecast_time,
+                market_type=market_type,
+                predicted_demand_mw=value,
+                source=source,
+                region=region,
+            )
+        elif forecast_type == ForecastTypeEnum.PRICE:
+            forecast = PriceForecast(
+                forecast_time=forecast_time,
+                market_type=market_type,
+                predicted_price=value,
+                source=source,
+                region=region,
+            )
+        # Add similar blocks for GENERATION and IMBALANCE
+        
         self.db.add(forecast)
         self.db.commit()
         self.db.refresh(forecast)
-
-        logger.info(f"Created new forecast: {forecast}")
         return forecast
 
     def update_actual_values(
         self,
         actual_time: datetime,
         market_type: MarketTypeEnum,
-        data_type: str,
+        forecast_type: ForecastTypeEnum,
         value: float,
         region: str = "ALL",
-    ) -> ActualData:
+    ) -> Optional[DemandForecast | PriceForecast | GenerationForecast | ImbalanceForecast]:
         """Update actual values after market data is available"""
-        actual_data = ActualData(
-            actual_time=actual_time,
-            market_type=market_type,
-            data_type=data_type,
-            value=value,
-            region=region,
-        )
-
-        self.db.add(actual_data)
-        self.db.commit()
-        self.db.refresh(actual_data)
-
-        logger.info(f"Added actual data: {actual_data}")
-        return actual_data
+        
+        # Get existing forecast
+        if forecast_type == ForecastTypeEnum.DEMAND:
+            forecast = self.db.query(DemandForecast).filter(
+                DemandForecast.forecast_time == actual_time,
+                DemandForecast.market_type == market_type
+            ).first()
+            if forecast:
+                forecast.actual_demand_mw = value
+                forecast.demand_error = abs(forecast.predicted_demand_mw - value)
+        # Add similar blocks for other forecast types
+        
+        if forecast:
+            self.db.commit()
+            self.db.refresh(forecast)
+        
+        return forecast
 
     def evaluate_forecast(
         self,
         forecast_time: datetime,
         market_type: MarketTypeEnum,
+        forecast_type: ForecastTypeEnum,
         model_name: str = "LSTM",
     ) -> Optional[ForecastEvaluation]:
         """Evaluate forecast accuracy by comparing it to actual values"""
-        forecast = (
-            self.db.query(Forecast)
-            .filter(
-                Forecast.forecast_time == forecast_time,
-                Forecast.market_type == market_type,
+        # Choose correct model based on forecast type
+        if forecast_type == ForecastTypeEnum.DEMAND:
+            forecast = (
+                self.db.query(DemandForecast)
+                .filter(
+                    DemandForecast.forecast_time == forecast_time,
+                    DemandForecast.market_type == market_type,
+                )
+                .first()
             )
-            .first()
-        )
+            if not forecast or forecast.actual_demand_mw is None:
+                logger.warning(f"No matching forecast or actual data found for {forecast_time}.")
+                return None
+            error = abs(forecast.actual_demand_mw - forecast.predicted_demand_mw)
+            actual_value = forecast.actual_demand_mw
+            forecast_value = forecast.predicted_demand_mw
 
-        actual = (
-            self.db.query(ActualData)
-            .filter(
-                ActualData.actual_time == forecast_time,
-                ActualData.market_type == market_type,
-            )
-            .first()
-        )
+        # Add similar blocks for other forecast types (PRICE, GENERATION, IMBALANCE)
 
-        if not forecast or not actual:
-            logger.warning(
-                f"No matching forecast or actual data found for {forecast_time}."
-            )
-            return None
-
-        error = abs(actual.value - forecast.value)
         evaluation = ForecastEvaluation(
             model_name=model_name,
             market_type=market_type,
             forecast_time=forecast_time,
-            actual_value=actual.value,
-            forecast_value=forecast.value,
+            actual_value=actual_value,
+            forecast_value=forecast_value,
             error=error,
             mae=error,
-            rmse=error**2,  # Placeholder for RMSE calculation
+            rmse=error**2,
         )
 
         self.db.add(evaluation)
         self.db.commit()
         self.db.refresh(evaluation)
-
-        logger.info(f"Evaluated forecast: {evaluation}")
         return evaluation
 
     def get_recent_forecasts(
-        self, market_type: MarketTypeEnum, limit: int = 24
-    ) -> List[Forecast]:
+        self, 
+        market_type: MarketTypeEnum, 
+        forecast_type: ForecastTypeEnum,
+        limit: int = 24
+    ) -> List[DemandForecast | PriceForecast | GenerationForecast | ImbalanceForecast]:
         """Retrieve most recent forecasts"""
+        if forecast_type == ForecastTypeEnum.DEMAND:
+            model = DemandForecast
+        elif forecast_type == ForecastTypeEnum.PRICE:
+            model = PriceForecast
+        # Add other types as needed
+        
         forecasts = (
-            self.db.query(Forecast)
-            .filter(Forecast.market_type == market_type)
-            .order_by(Forecast.forecast_time.desc())
+            self.db.query(model)
+            .filter(model.market_type == market_type)
+            .order_by(model.forecast_time.desc())
             .limit(limit)
             .all()
         )
-
-        logger.info(f"Fetched {len(forecasts)} recent forecasts.")
+        
         return forecasts
 
     def run_forecast_for_next_24h(self):
