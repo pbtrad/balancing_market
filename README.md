@@ -18,34 +18,18 @@ This project aims to develop a machine learning pipeline for forecasting electri
 
 * FastAPI Endpoint: Exposes trained models via API for predictions.
 
-**Project Plan(so far)**
+**Project Plan (Updated)**
 
-Data Collection and Preprocessing: Scrape real-time market data, automate CSV downloads, develop preprocessing scripts
+* Automate the pipeline:
 
-Model Development: Train demand forecasting model, train market price prediction model, evaluate models
+- EirGrid scraper runs every few minutes (lambdas)
 
-API Integration and Deployment: Deploy models via FastAPI, set up Docker, expose endpoints for predictions
+- Raw data is saved to S3
 
-**AWS Plan**
+- Data is ingested continuously  (more lambdas)
 
-Either preprocess data locally or with a SageMaker processing job.
+- The model trains and predicts regularly (e.g., daily)  (even more lambdas)
 
-Upload processed data to S3.
+- Forecasts are stored in the database  (RDS)
 
-Start a SageMaker training job, pointing it to the data in S3.
-
-Deploy the trained model on SageMaker for inference.
-
-**Infrastructure as Code**
-
-Networking: VPC, subnets, security groups etc
-
-Database: RDS instance (postgres), will need read replica if I decide to use Grafana.
-
-Storage: S3 buckets (S3 Glacier for archiving).
-
-Containers: ECS (docker etc).
-
-Machine Learning: SageMaker for training and deploying models.
-
-Logging: CloudWatch.
+- API can serve those forecasts to the frontend
