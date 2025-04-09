@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Application stack for deploying Lambda functions, SageMaker, and logging."
+Description: "Application stack for deploying Lambda functions and logging."
 
 Parameters:
   ComputeStackName:
@@ -7,7 +7,6 @@ Parameters:
     Description: "Name of the compute stack to import values from"
 
 Resources:
-
   ScraperFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -40,26 +39,10 @@ Resources:
       Principal: events.amazonaws.com
       SourceArn: !GetAtt ScraperSchedule.Arn
 
-  SageMakerNotebookInstance:
-    Type: AWS::SageMaker::NotebookInstance
-    Properties:
-      NotebookInstanceName: "DataProcessingNotebook"
-      InstanceType: ml.t3.medium
-      RoleArn: !ImportValue balancing-market-compute-SageMakerRoleArn
-      VolumeSizeInGB: 10
-      DirectInternetAccess: Enabled
-      PlatformIdentifier: notebook-al2-v2
-
 Outputs:
   ScraperFunctionArn:
     Description: "ARN of the Scraper Lambda function"
     Value: !GetAtt ScraperFunction.Arn
     Export:
       Name: !Sub "${AWS::StackName}-ScraperFunctionArn"
-
-  SageMakerNotebookInstanceName:
-    Description: "Name of the SageMaker Notebook instance"
-    Value: !Ref SageMakerNotebookInstance
-    Export:
-      Name: !Sub "${AWS::StackName}-SageMakerNotebookInstance"
 

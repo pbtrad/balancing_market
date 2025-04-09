@@ -43,7 +43,6 @@ class PredictionService:
                 source=source,
                 region=region,
             )
-        # Add similar blocks for GENERATION and IMBALANCE
         
         self.db.add(forecast)
         self.db.commit()
@@ -69,7 +68,6 @@ class PredictionService:
             if forecast:
                 forecast.actual_demand_mw = value
                 forecast.demand_error = abs(forecast.predicted_demand_mw - value)
-        # Add similar blocks for other forecast types
         
         if forecast:
             self.db.commit()
@@ -85,7 +83,6 @@ class PredictionService:
         model_name: str = "LSTM",
     ) -> Optional[ForecastEvaluation]:
         """Evaluate forecast accuracy by comparing it to actual values"""
-        # Choose correct model based on forecast type
         if forecast_type == ForecastTypeEnum.DEMAND:
             forecast = (
                 self.db.query(DemandForecast)
@@ -102,7 +99,6 @@ class PredictionService:
             actual_value = forecast.actual_demand_mw
             forecast_value = forecast.predicted_demand_mw
 
-        # Add similar blocks for other forecast types (PRICE, GENERATION, IMBALANCE)
 
         evaluation = ForecastEvaluation(
             model_name=model_name,
@@ -131,7 +127,6 @@ class PredictionService:
             model = DemandForecast
         elif forecast_type == ForecastTypeEnum.PRICE:
             model = PriceForecast
-        # Add other types as needed
         
         forecasts = (
             self.db.query(model)
