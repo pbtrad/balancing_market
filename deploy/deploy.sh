@@ -33,6 +33,10 @@ echo "Compute Stack Outputs:"
 echo "DataBucketName: $DATA_BUCKET_NAME"
 echo "LambdaRoleArn: $LAMBDA_ROLE_ARN"
 
+# Upload Lambda package to S3
+echo "Uploading Lambda package to S3..."
+aws s3 cp eirgrid_scraper.zip "s3://${DATA_BUCKET_NAME}/lambda/eirgrid_scraper.zip"
+
 # Deploy Application Stack
 echo "Deploying Application Stack..."
 aws cloudformation deploy \
