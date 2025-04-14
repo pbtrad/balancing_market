@@ -11,7 +11,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub "${AWS::StackName}-scraper"
-      Runtime: python3.9
+      Runtime: python3.11
       Handler: eirgrid_scraper.handler
       Code:
         S3Bucket: !ImportValue balancing-market-compute-DataBucketName
@@ -26,7 +26,7 @@ Resources:
   ScraperSchedule:
     Type: AWS::Events::Rule
     Properties:
-      ScheduleExpression: "rate(1 day)"
+      ScheduleExpression: "rate(1 hour)"
       Targets:
         - Arn: !GetAtt ScraperFunction.Arn
           Id: "ScraperLambdaTarget"
